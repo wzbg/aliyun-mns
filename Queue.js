@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 14:38:59
+* @Last Modified time: 2016-01-21 15:50:21
 */
 'use strict'
 
@@ -113,18 +113,35 @@ module.exports = class {
           json.Error.status = status
           return reject(json.Error)
         }
+        json.Queue.status = status
         resolve(json.Queue)
       })
     })
   }
 
-  list () {
+  list (headers) {
     const method = 'GET'
     const URI = '/queues'
-    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
+    headers = headers || {}
+    if (!headers['x-mns-version']) {
+      headers['x-mns-version'] = this.mns.XMnsVersion
+    }
+    const xmns = []
+    for (let header of Object.keys(headers).sort()) {
+      if (header.startsWith('x-mns-')) {
+        xmns.push(header + ':' + headers[header])
+      }
+    }
+    const authorization = this.mns.authorization({
+      VERB: method,
+      CanonicalizedResource: URI,
+      CanonicalizedMNSHeaders: xmns.join('\n')
+    })
+    headers.Date = authorization.DATE
+    headers.Authorization = authorization.Authorization
     return new Promise((resolve, reject) => {
       fetchUrl(this.mns.Endpoint + URI, {
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+        headers
       }, (err, res, buf) => {
         if (err) return reject(err)
         const status = res.status
@@ -133,7 +150,10 @@ module.exports = class {
           json.Error.status = status
           return reject(json.Error)
         }
-        resolve(json.Queues.Queue.map(queue => queue.QueueURL.substring(queue.QueueURL.lastIndexOf('/') + 1)))
+        let queues = json.Queues.Queue
+        const nextMarker = json.Queues.NextMarker
+        queues = queues ? queues.map(queue => queue.QueueURL.substring(queue.QueueURL.lastIndexOf('/') + 1)) : []
+        resolve({ queues, nextMarker, status })
       })
     })
   }
