@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 13:52:18
+* @Last Modified time: 2016-01-21 14:12:42
 */
 'use strict'
 
@@ -66,6 +66,28 @@ module.exports = class {
           HostId: this.mns.Endpoint,
           status
         })
+      })
+    })
+  }
+
+  get () {
+    const method = 'GET'
+    const URI = `/queues/${this.name}`
+    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
+    return new Promise((resolve, reject) => {
+      fetchUrl(this.mns.Endpoint + URI, {
+        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+      }, (err, res, buf) => {
+        if (err) return reject(err)
+        const status = res.status
+        const json = parser.toJson(buf.toString(), { object: true })
+        if (json.Queue) {
+          json.Queue.status = status
+          return resolve(json.Queue)
+        } else {
+          json.Error.status = status
+          return reject(json.Error)
+        }
       })
     })
   }
