@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 01:16:58
+* @Last Modified time: 2016-01-22 02:11:21
 */
 'use strict'
 
@@ -40,7 +40,7 @@ module.exports = class {
     if (typeof options  == 'string') {
       options = { MessageBody: options }
     } else if (options instanceof Array) {
-      options = { Message: options.map(option => typeof option  == 'string' ? { MessageBody: option } : option ) }
+      options = { Message: options.map(option => typeof option  == 'string' ? { MessageBody: option } : option) }
       Key += 's'
     }
     options._attr = { xmlns }
@@ -96,22 +96,38 @@ module.exports = class {
     })
   }
 
+  /*
+  * ReceiptHandle
+  *  上次消费后返回的消息ReceiptHandle，详见本文ReceiveMessage接口
+  *  Required
+  */
   delete (ReceiptHandle) {
     const method = 'DELETE'
-    const URI = `/queues/${this.queue.name}/messages?ReceiptHandle=${ReceiptHandle}`
+    let URI = `/queues/${this.queue.name}/messages`
+    if (typeof ReceiptHandle  == 'string') {
+      URI += `?ReceiptHandle=${ReceiptHandle}`
+    } else if (ReceiptHandle instanceof Array) {
+      ReceiptHandle = { ReceiptHandle }
+      ReceiptHandle._attr = { xmlns }
+    }
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return new Promise((resolve, reject) => {
       fetchUrl(this.mns.Endpoint + URI, {
         method,
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
+        payload: convert('ReceiptHandles', ReceiptHandle)
       }, (err, res, buf) => {
         if (err) return reject(err)
         const status = res.status
         const xml = buf.toString()
         if (xml) {
           const json = parser.toJson(xml, { object: true })
-          json.Error.status = status
-          return reject(json.Error)
+          if (json.Errors) json.Error = json.Errors.Error
+          if (json.Error) {
+            json.Error.status = status
+            return reject(json.Error)
+          }
+          return reject(json)
         }
         resolve({
           xmlns,

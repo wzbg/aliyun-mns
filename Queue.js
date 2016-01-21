@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 23:20:13
+* @Last Modified time: 2016-01-22 01:44:04
 */
 'use strict'
 
@@ -81,7 +81,7 @@ module.exports = class {
     return new Promise((resolve, reject) => {
       fetchUrl(this.mns.Endpoint + URI, {
         method,
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
+        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
       }, (err, res, buf) => {
         if (err) return reject(err)
         const status = res.status
