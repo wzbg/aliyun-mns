@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 02:22:05
+* @Last Modified time: 2016-01-22 02:39:46
 */
 'use strict'
 
@@ -101,21 +101,21 @@ module.exports = class {
   *  上次消费后返回的消息ReceiptHandle，详见本文ReceiveMessage接口
   *  Required
   */
-  delete (ReceiptHandle) {
+  delete (receiptHandle) {
     const method = 'DELETE'
     let URI = `/queues/${this.queue.name}/messages`
-    if (typeof ReceiptHandle  == 'string') {
-      URI += `?ReceiptHandle=${ReceiptHandle}`
-    } else if (ReceiptHandle instanceof Array) {
-      ReceiptHandle = { ReceiptHandle }
-      ReceiptHandle._attr = { xmlns }
+    if (typeof receiptHandle  == 'string') {
+      URI += `?receiptHandle=${receiptHandle}`
+    } else if (receiptHandle instanceof Array) {
+      receiptHandle = { receiptHandle }
+      receiptHandle._attr = { xmlns }
     }
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return new Promise((resolve, reject) => {
       fetchUrl(this.mns.Endpoint + URI, {
         method,
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-        payload: convert('ReceiptHandles', ReceiptHandle)
+        payload: convert('ReceiptHandles', receiptHandle)
       }, (err, res, buf) => {
         if (err) return reject(err)
         const status = res.status
@@ -167,6 +167,35 @@ module.exports = class {
         }
         if (numOfMessages) json = json.Messages
         resolve(json.Message)
+      })
+    })
+  }
+
+  /*
+  * ReceiptHandle
+  * 上次消费后返回的消息 ReceiptHandle ，详见 ReceiveMessage 接口
+  * Required
+  * VisibilityTimeout
+  * 从现在到下次可被用来消费的时间间隔，单位为秒
+  * Required
+  */
+  visibility (receiptHandle, visibilityTimeout) {
+    const method = 'PUT'
+    const URI = `/queues/${this.queue.name}/messages?receiptHandle=${receiptHandle}&visibilityTimeout=${visibilityTimeout}`
+    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
+    return new Promise((resolve, reject) => {
+      fetchUrl(this.mns.Endpoint + URI, {
+        method,
+        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+      }, (err, res, buf) => {
+        if (err) return reject(err)
+        const status = res.status
+        let json = parser.toJson(buf.toString(), { object: true })
+        if (json.Error) {
+          json.Error.status = status
+          return reject(json.Error)
+        }
+        resolve(json.ChangeVisibility)
       })
     })
   }
