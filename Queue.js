@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 13:35:02
+* @Last Modified time: 2016-01-21 13:52:18
 */
 'use strict'
 
@@ -38,20 +38,17 @@ module.exports = class {
     this.options = options || {}
   }
 
-  create () {
+  create (metaoverride) {
     const method = 'PUT'
-    const URI = `/queues/${this.name}`
+    let URI = `/queues/${this.name}`
+    if (metaoverride) URI += `?metaoverride=${metaoverride}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     const options = this.options || {}
     options._attr = { xmlns }
     return new Promise((resolve, reject) => {
       fetchUrl(this.mns.Endpoint + URI, {
         method,
-        headers: {
-          Date: DATE,
-          Authorization,
-          'x-mns-version': this.mns.XMnsVersion
-        },
+        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
         payload: convert('Queue', options)
       }, (err, res, buf) => {
         if (err) return reject(err)
