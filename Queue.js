@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 14:18:59
+* @Last Modified time: 2016-01-21 14:38:59
 */
 'use strict'
 
@@ -59,35 +59,13 @@ module.exports = class {
           json.Error.status = status
           return reject(json.Error)
         }
-        return resolve({
+        resolve({
           xmlns,
           Code: status === 201 ? 'Created' : 'No Content',
           RequestId: res.responseHeaders['x-mns-request-id'],
           HostId: this.mns.Endpoint,
           status
         })
-      })
-    })
-  }
-
-  get () {
-    const method = 'GET'
-    const URI = `/queues/${this.name}`
-    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
-      }, (err, res, buf) => {
-        if (err) return reject(err)
-        const status = res.status
-        const json = parser.toJson(buf.toString(), { object: true })
-        if (json.Queue) {
-          json.Queue.status = status
-          return resolve(json.Queue)
-        } else {
-          json.Error.status = status
-          return reject(json.Error)
-        }
       })
     })
   }
@@ -109,13 +87,53 @@ module.exports = class {
           json.Error.status = status
           return reject(json.Error)
         }
-        return resolve({
+        resolve({
           xmlns,
           Code: 'No Content',
           RequestId: res.responseHeaders['x-mns-request-id'],
           HostId: this.mns.Endpoint,
           status
         })
+      })
+    })
+  }
+
+  get () {
+    const method = 'GET'
+    const URI = `/queues/${this.name}`
+    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
+    return new Promise((resolve, reject) => {
+      fetchUrl(this.mns.Endpoint + URI, {
+        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+      }, (err, res, buf) => {
+        if (err) return reject(err)
+        const status = res.status
+        const json = parser.toJson(buf.toString(), { object: true })
+        if (json.Error) {
+          json.Error.status = status
+          return reject(json.Error)
+        }
+        resolve(json.Queue)
+      })
+    })
+  }
+
+  list () {
+    const method = 'GET'
+    const URI = '/queues'
+    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
+    return new Promise((resolve, reject) => {
+      fetchUrl(this.mns.Endpoint + URI, {
+        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+      }, (err, res, buf) => {
+        if (err) return reject(err)
+        const status = res.status
+        const json = parser.toJson(buf.toString(), { object: true })
+        if (json.Error) {
+          json.Error.status = status
+          return reject(json.Error)
+        }
+        resolve(json.Queues.Queue.map(queue => queue.QueueURL.substring(queue.QueueURL.lastIndexOf('/') + 1)))
       })
     })
   }
