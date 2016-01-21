@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 23:23:21
+* @Last Modified time: 2016-01-21 23:54:16
 */
 'use strict'
 
@@ -37,8 +37,10 @@ module.exports = class {
     const URI = `/queues/${this.queue.name}/messages`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     let Key = 'Message'
-    if (options instanceof Array) {
-      options = { Message: options }
+    if (typeof options  == 'string') {
+      options = { MessageBody: options }
+    } else if (options instanceof Array) {
+      options = { Message: options.map(option => typeof option  == 'string' ? { MessageBody: option } : option ) }
       Key += 's'
     }
     options._attr = { xmlns }
@@ -61,10 +63,11 @@ module.exports = class {
     })
   }
 
-  receive (waitseconds) {
+  receive (waitseconds, numOfMessages) {
     const method = 'GET'
-    let URI = `/queues/${this.queue.name}/messages`
-    if (waitseconds) URI += `?waitseconds=${waitseconds}`
+    waitseconds = waitseconds || 0
+    let URI = `/queues/${this.queue.name}/messages?waitseconds=${waitseconds}`
+    if (numOfMessages) URI += `&numOfMessages=${numOfMessages}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return new Promise((resolve, reject) => {
       fetchUrl(this.mns.Endpoint + URI, {
@@ -72,12 +75,12 @@ module.exports = class {
       }, (err, res, buf) => {
         if (err) return reject(err)
         const status = res.status
-        const json = parser.toJson(buf.toString(), { object: true })
+        let json = parser.toJson(buf.toString(), { object: true })
         if (json.Error) {
           json.Error.status = status
           return reject(json.Error)
         }
-        json.Message.status = status
+        if (numOfMessages) json = json.Messages
         resolve(json.Message)
       })
     })
