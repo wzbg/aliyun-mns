@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 15:50:21
+* @Last Modified time: 2016-01-21 18:48:36
 */
 'use strict'
 
@@ -10,6 +10,8 @@ const assert = require('assert')
 const parser = require('xml2json')
 const convert = require('data2xml')()
 const fetchUrl = require('fetch').fetchUrl
+
+const Message = require('./Message')
 
 const xmlns = 'http://mns.aliyuncs.com/doc/v1/'
 
@@ -36,6 +38,10 @@ module.exports = class {
     this.mns = mns
     this.name = name
     this.options = options || {}
+  }
+
+  message () {
+    return new Message(this)
   }
 
   create (metaoverride) {
