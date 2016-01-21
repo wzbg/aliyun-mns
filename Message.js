@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 22:56:11
+* @Last Modified time: 2016-01-21 23:23:21
 */
 'use strict'
 
@@ -57,6 +57,28 @@ module.exports = class {
         }
         json[Key].status = status
         resolve(json[Key])
+      })
+    })
+  }
+
+  receive (waitseconds) {
+    const method = 'GET'
+    let URI = `/queues/${this.queue.name}/messages`
+    if (waitseconds) URI += `?waitseconds=${waitseconds}`
+    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
+    return new Promise((resolve, reject) => {
+      fetchUrl(this.mns.Endpoint + URI, {
+        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+      }, (err, res, buf) => {
+        if (err) return reject(err)
+        const status = res.status
+        const json = parser.toJson(buf.toString(), { object: true })
+        if (json.Error) {
+          json.Error.status = status
+          return reject(json.Error)
+        }
+        json.Message.status = status
+        resolve(json.Message)
       })
     })
   }
