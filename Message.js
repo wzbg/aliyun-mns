@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 23:54:16
+* @Last Modified time: 2016-01-22 01:16:58
 */
 'use strict'
 
@@ -63,6 +63,16 @@ module.exports = class {
     })
   }
 
+  /*
+  * waitseconds
+  *  本次ReceiveMessage请求最长的Polling等待时间①，单位为秒
+  *  取值范围0~30
+  *  Optional
+  * numOfMessages
+  *  本次BatchReceiveMessage最多获取的消息条数
+  *  取值范围1~16
+  *  Required
+  */
   receive (waitseconds, numOfMessages) {
     const method = 'GET'
     waitseconds = waitseconds || 0
@@ -82,6 +92,34 @@ module.exports = class {
         }
         if (numOfMessages) json = json.Messages
         resolve(json.Message)
+      })
+    })
+  }
+
+  delete (ReceiptHandle) {
+    const method = 'DELETE'
+    const URI = `/queues/${this.queue.name}/messages?ReceiptHandle=${ReceiptHandle}`
+    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
+    return new Promise((resolve, reject) => {
+      fetchUrl(this.mns.Endpoint + URI, {
+        method,
+        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
+      }, (err, res, buf) => {
+        if (err) return reject(err)
+        const status = res.status
+        const xml = buf.toString()
+        if (xml) {
+          const json = parser.toJson(xml, { object: true })
+          json.Error.status = status
+          return reject(json.Error)
+        }
+        resolve({
+          xmlns,
+          Code: 'No Content',
+          RequestId: res.responseHeaders['x-mns-request-id'],
+          HostId: this.mns.Endpoint,
+          status
+        })
       })
     })
   }
