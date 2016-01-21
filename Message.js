@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 22:44:04
+* @Last Modified time: 2016-01-21 22:56:11
 */
 'use strict'
 
@@ -18,16 +18,35 @@ module.exports = class {
     this.queue = queue
   }
 
-  send (message) {
+  /*
+  * MessageBody
+  *  消息正文
+  *  UTF-8字符集
+  *  Required
+  * DelaySeconds
+  *  DelaySeconds 指定的秒数延后可被消费，单位为秒
+  *  0-604800秒（7天）范围内某个整数值，默认值为0
+  *  Optional
+  * Priority
+  *  指定消息的优先级权值，优先级越高的消息，越容易更早被消费
+  *  取值范围1~16（其中1为最高优先级），默认优先级为8
+  *  Optional
+  */
+  send (options) {
     const method = 'POST'
     const URI = `/queues/${this.queue.name}/messages`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    message._attr = { xmlns }
+    let Key = 'Message'
+    if (options instanceof Array) {
+      options = { Message: options }
+      Key += 's'
+    }
+    options._attr = { xmlns }
     return new Promise((resolve, reject) => {
       fetchUrl(this.mns.Endpoint + URI, {
         method,
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-        payload: convert('Message', message)
+        payload: convert(Key, options)
       }, (err, res, buf) => {
         if (err) return reject(err)
         const status = res.status
@@ -36,33 +55,8 @@ module.exports = class {
           json.Error.status = status
           return reject(json.Error)
         }
-        json.Message.status = status
-        resolve(json.Message)
-      })
-    })
-  }
-
-  batchSend (messages) {
-    const method = 'POST'
-    const URI = `/queues/${this.queue.name}/messages`
-    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    messages = { Message: messages }
-    messages._attr = { xmlns }
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        method,
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-        payload: convert('Messages', messages)
-      }, (err, res, buf) => {
-        if (err) return reject(err)
-        const status = res.status
-        const json = parser.toJson(buf.toString(), { object: true })
-        if (json.Error) {
-          json.Error.status = status
-          return reject(json.Error)
-        }
-        json.Messages.status = status
-        resolve(json.Messages)
+        json[Key].status = status
+        resolve(json[Key])
       })
     })
   }
