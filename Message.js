@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 17:32:54
+* @Last Modified time: 2016-01-22 18:36:46
 */
 'use strict'
 
@@ -32,7 +32,7 @@ module.exports = class {
   *  取值范围1~16（其中1为最高优先级），默认优先级为8
   *  Optional
   */
-  send (options) {
+  send (options, callback) {
     const method = 'POST'
     const URI = `/queues/${this.queue.name}/messages`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
@@ -50,14 +50,19 @@ module.exports = class {
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
         payload: convert(Key, options)
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         const json = parser.toJson(buf.toString(), { object: true })
         if (json.Error) {
           json.Error.status = status
+          callback(json.Error)
           return reject(json.Error)
         }
         json[Key].status = status
+        callback(null, json[Key])
         resolve(json[Key])
       })
     })
@@ -106,7 +111,7 @@ module.exports = class {
   *  上次消费后返回的消息ReceiptHandle，详见本文ReceiveMessage接口
   *  Required
   */
-  delete (receiptHandle) {
+  delete (receiptHandle, callback) {
     const method = 'DELETE'
     let URI = `/queues/${this.queue.name}/messages`
     if (typeof receiptHandle  == 'string') {
@@ -122,7 +127,10 @@ module.exports = class {
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
         payload: convert('ReceiptHandles', receiptHandle)
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         const xml = buf.toString()
         if (xml) {
@@ -130,17 +138,20 @@ module.exports = class {
           if (json.Errors) json.Error = json.Errors.Error
           if (json.Error) {
             json.Error.status = status
+            callback(json.Error)
             return reject(json.Error)
           }
           return reject(json)
         }
-        resolve({
+        const result = {
           xmlns,
           Code: 'No Content',
           RequestId: res.responseHeaders['x-mns-request-id'],
           HostId: this.mns.Endpoint,
           status
-        })
+        }
+        callback(null, result)
+        resolve(result)
       })
     })
   }
@@ -154,7 +165,7 @@ module.exports = class {
   *  最多查看消息条数
   *  Required
   */
-  peek (numOfMessages) {
+  peek (numOfMessages, callback) {
     const method = 'GET'
     let URI = `/queues/${this.queue.name}/messages?peekonly=true`
     if (numOfMessages) URI += `&numOfMessages=${numOfMessages}`
@@ -163,14 +174,19 @@ module.exports = class {
       fetchUrl(this.mns.Endpoint + URI, {
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         let json = parser.toJson(buf.toString(), { object: true })
         if (json.Error) {
           json.Error.status = status
+          callback(json.Error)
           return reject(json.Error)
         }
         if (numOfMessages) json = json.Messages
+        callback(null, json.Message)
         resolve(json.Message)
       })
     })
@@ -184,7 +200,7 @@ module.exports = class {
   *  从现在到下次可被用来消费的时间间隔，单位为秒
   *  Required
   */
-  visibility (receiptHandle, visibilityTimeout) {
+  visibility (receiptHandle, visibilityTimeout, callback) {
     const method = 'PUT'
     const URI = `/queues/${this.queue.name}/messages?receiptHandle=${receiptHandle}&visibilityTimeout=${visibilityTimeout}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
@@ -193,13 +209,18 @@ module.exports = class {
         method,
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         let json = parser.toJson(buf.toString(), { object: true })
         if (json.Error) {
           json.Error.status = status
+          callback(json.Error)
           return reject(json.Error)
         }
+        callback(null, json.ChangeVisibility)
         resolve(json.ChangeVisibility)
       })
     })

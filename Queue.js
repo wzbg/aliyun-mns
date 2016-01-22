@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 01:44:04
+* @Last Modified time: 2016-01-22 18:41:44
 */
 'use strict'
 
@@ -42,7 +42,7 @@ module.exports = class {
     return new Message(this)
   }
 
-  create (metaoverride) {
+  create (metaoverride, callback) {
     const method = 'PUT'
     let URI = `/queues/${this.name}`
     if (metaoverride) URI += `?metaoverride=${metaoverride}`
@@ -55,26 +55,32 @@ module.exports = class {
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
         payload: convert('Queue', options)
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         const xml = buf.toString()
         if (xml) {
           const json = parser.toJson(xml, { object: true })
           json.Error.status = status
+          callback(json.Error)
           return reject(json.Error)
         }
-        resolve({
+        const result = {
           xmlns,
           Code: status === 201 ? 'Created' : 'No Content',
           RequestId: res.responseHeaders['x-mns-request-id'],
           HostId: this.mns.Endpoint,
           status
-        })
+        }
+        callback(null, result)
+        resolve(result)
       })
     })
   }
 
-  delete () {
+  delete (callback) {
     const method = 'DELETE'
     const URI = `/queues/${this.name}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
@@ -83,26 +89,32 @@ module.exports = class {
         method,
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         const xml = buf.toString()
         if (xml) {
           const json = parser.toJson(xml, { object: true })
           json.Error.status = status
+          callback(json.Error)
           return reject(json.Error)
         }
-        resolve({
+        const result = {
           xmlns,
           Code: 'No Content',
           RequestId: res.responseHeaders['x-mns-request-id'],
           HostId: this.mns.Endpoint,
           status
-        })
+        }
+        callback(null, result)
+        resolve(result)
       })
     })
   }
 
-  get () {
+  get (callback) {
     const method = 'GET'
     const URI = `/queues/${this.name}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
@@ -110,20 +122,25 @@ module.exports = class {
       fetchUrl(this.mns.Endpoint + URI, {
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         const json = parser.toJson(buf.toString(), { object: true })
         if (json.Error) {
           json.Error.status = status
+          callback(json.Error)
           return reject(json.Error)
         }
         json.Queue.status = status
+        callback(null, json.Queue)
         resolve(json.Queue)
       })
     })
   }
 
-  list (headers) {
+  list (headers, callback) {
     const method = 'GET'
     const URI = '/queues'
     headers = headers || {}
@@ -147,16 +164,21 @@ module.exports = class {
       fetchUrl(this.mns.Endpoint + URI, {
         headers
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         const json = parser.toJson(buf.toString(), { object: true })
         if (json.Error) {
           json.Error.status = status
+          callback(json.Error)
           return reject(json.Error)
         }
         let queues = json.Queues.Queue
         const nextMarker = json.Queues.NextMarker
         queues = queues ? queues.map(queue => queue.QueueURL.substring(queue.QueueURL.lastIndexOf('/') + 1)) : []
+        callback(null, { queues, nextMarker, status })
         resolve({ queues, nextMarker, status })
       })
     })
