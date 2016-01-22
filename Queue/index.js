@@ -2,15 +2,15 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-23 00:56:02
+* @Last Modified time: 2016-01-23 01:49:41
 */
 'use strict'
 
 const convert = require('data2xml')()
 
 const Message = require('./Message')
-const xmlns = require('./common/constants').xmlns
-const fetchPromise = require('./common/fetchPromise')
+const xmlns = require('../common/constants').xmlns
+const fetchPromise = require('../common/fetchPromise')
 
 /*
 * DelaySeconds

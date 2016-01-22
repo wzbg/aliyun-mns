@@ -2,14 +2,14 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-23 01:21:56
+* @Last Modified time: 2016-01-23 01:49:00
 */
 'use strict'
 
 const convert = require('data2xml')()
 
-const xmlns = require('./common/constants').xmlns
-const fetchPromise = require('./common/fetchPromise')
+const xmlns = require('../common/constants').xmlns
+const fetchPromise = require('../common/fetchPromise')
 
 module.exports = class {
   constructor (queue) {
