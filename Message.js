@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 02:39:46
+* @Last Modified time: 2016-01-22 17:32:54
 */
 'use strict'
 
@@ -73,7 +73,7 @@ module.exports = class {
   *  取值范围1~16
   *  Required
   */
-  receive (waitseconds, numOfMessages) {
+  receive (waitseconds, numOfMessages, callback) {
     const method = 'GET'
     waitseconds = waitseconds || 0
     let URI = `/queues/${this.queue.name}/messages?waitseconds=${waitseconds}`
@@ -83,14 +83,19 @@ module.exports = class {
       fetchUrl(this.mns.Endpoint + URI, {
         headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
       }, (err, res, buf) => {
-        if (err) return reject(err)
+        if (err) {
+          callback(err)
+          return reject(err)
+        }
         const status = res.status
         let json = parser.toJson(buf.toString(), { object: true })
         if (json.Error) {
           json.Error.status = status
+          callback(json.Error)
           return reject(json.Error)
         }
         if (numOfMessages) json = json.Messages
+        callback(null, json.Message)
         resolve(json.Message)
       })
     })
@@ -173,11 +178,11 @@ module.exports = class {
 
   /*
   * ReceiptHandle
-  * 上次消费后返回的消息 ReceiptHandle ，详见 ReceiveMessage 接口
-  * Required
+  *  上次消费后返回的消息 ReceiptHandle ，详见 ReceiveMessage 接口
+  *  Required
   * VisibilityTimeout
-  * 从现在到下次可被用来消费的时间间隔，单位为秒
-  * Required
+  *  从现在到下次可被用来消费的时间间隔，单位为秒
+  *  Required
   */
   visibility (receiptHandle, visibilityTimeout) {
     const method = 'PUT'
@@ -197,6 +202,14 @@ module.exports = class {
         }
         resolve(json.ChangeVisibility)
       })
+    })
+  }
+
+  subscribe (waitseconds, numOfMessages, delay, callback) {
+    delay = delay || 0
+    this.receive(waitseconds, numOfMessages, (err, res) => {
+      callback(err, res, () => this.delete(res instanceof Array ? res.map(msg => msg.ReceiptHandle) : res.ReceiptHandle))
+      setTimeout(() => this.subscribe(waitseconds, numOfMessages, delay, callback), delay * 1000)
     })
   }
 }
