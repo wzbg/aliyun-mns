@@ -2,11 +2,12 @@
 * @Author: zyc
 * @Date:   2016-01-20 13:17:37
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 18:48:32
+* @Last Modified time: 2016-01-23 02:09:57
 */
 'use strict'
 
 const Queue = require('./Queue')
+const Topic = require('./Topic')
 const Signature = require('./Signature')
 
 module.exports = class {
@@ -25,5 +26,9 @@ module.exports = class {
 
   queue (queueName, options) {
     return new Queue(this, queueName, options)
+  }
+
+  topic (topicName, maximumMessageSize) {
+    return new Queue(this, topicName, maximumMessageSize)
   }
 }
