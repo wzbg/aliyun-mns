@@ -2,17 +2,15 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 18:57:04
+* @Last Modified time: 2016-01-23 00:56:02
 */
 'use strict'
 
-const parser = require('xml2json')
 const convert = require('data2xml')()
-const fetchUrl = require('fetch').fetchUrl
 
 const Message = require('./Message')
-
 const xmlns = require('./common/constants').xmlns
+const fetchPromise = require('./common/fetchPromise')
 
 /*
 * DelaySeconds
@@ -49,95 +47,45 @@ module.exports = class {
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     const options = this.options || {}
     options._attr = { xmlns }
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        method,
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-        payload: convert('Queue', options)
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        const xml = buf.toString()
-        if (xml) {
-          const json = parser.toJson(xml, { object: true })
-          json.Error.status = status
-          callback(json.Error)
-          return reject(json.Error)
-        }
-        const result = {
-          xmlns,
-          Code: status === 201 ? 'Created' : 'No Content',
-          RequestId: res.responseHeaders['x-mns-request-id'],
-          HostId: this.mns.Endpoint,
-          status
-        }
-        callback(null, result)
-        resolve(result)
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      method,
+      headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
+      payload: convert('Queue', options)
+    }, (json, res) => ({
+      xmlns,
+      Code: res.status === 201 ? 'Created' : 'No Content',
+      RequestId: res.responseHeaders['x-mns-request-id'],
+      HostId: this.mns.Endpoint,
+      status: res.status
+    }), callback)
   }
 
   delete (callback) {
     const method = 'DELETE'
     const URI = `/queues/${this.name}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        method,
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        const xml = buf.toString()
-        if (xml) {
-          const json = parser.toJson(xml, { object: true })
-          json.Error.status = status
-          callback(json.Error)
-          return reject(json.Error)
-        }
-        const result = {
-          xmlns,
-          Code: 'No Content',
-          RequestId: res.responseHeaders['x-mns-request-id'],
-          HostId: this.mns.Endpoint,
-          status
-        }
-        callback(null, result)
-        resolve(result)
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      method,
+      headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+    }, (json, res) => ({
+      xmlns,
+      Code: 'No Content',
+      RequestId: res.responseHeaders['x-mns-request-id'],
+      HostId: this.mns.Endpoint,
+      status: res.status
+    }), callback)
   }
 
   get (callback) {
     const method = 'GET'
     const URI = `/queues/${this.name}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        const json = parser.toJson(buf.toString(), { object: true })
-        if (json.Error) {
-          json.Error.status = status
-          callback(json.Error)
-          return reject(json.Error)
-        }
-        json.Queue.status = status
-        callback(null, json.Queue)
-        resolve(json.Queue)
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+    }, (json, res) => {
+      json.Queue.status = res.status
+      return json.Queue
+    }, callback)
   }
 
   list (headers, callback) {
@@ -160,27 +108,15 @@ module.exports = class {
     })
     headers.Date = authorization.DATE
     headers.Authorization = authorization.Authorization
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        headers
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        const json = parser.toJson(buf.toString(), { object: true })
-        if (json.Error) {
-          json.Error.status = status
-          callback(json.Error)
-          return reject(json.Error)
-        }
-        let queues = json.Queues.Queue
-        const nextMarker = json.Queues.NextMarker
-        queues = queues ? queues.map(queue => queue.QueueURL.substring(queue.QueueURL.lastIndexOf('/') + 1)) : []
-        callback(null, { queues, nextMarker, status })
-        resolve({ queues, nextMarker, status })
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      headers
+    }, (json, res) => {
+      const nextMarker = json.Queues.NextMarker
+      let queues = json.Queues.Queue
+      if (!queues) queues = []
+      else if (!(queues instanceof Array)) queues = [queues]
+      queues = queues.map(queue => queue.QueueURL.substring(queue.QueueURL.lastIndexOf('/') + 1))
+      return { queues, nextMarker, status: res.status }
+    }, callback)
   }
 }

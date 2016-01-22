@@ -2,15 +2,14 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 18:57:13
+* @Last Modified time: 2016-01-23 01:21:56
 */
 'use strict'
 
-const parser = require('xml2json')
 const convert = require('data2xml')()
-const fetchUrl = require('fetch').fetchUrl
 
 const xmlns = require('./common/constants').xmlns
+const fetchPromise = require('./common/fetchPromise')
 
 module.exports = class {
   constructor (queue) {
@@ -44,28 +43,14 @@ module.exports = class {
       Key += 's'
     }
     options._attr = { xmlns }
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        method,
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-        payload: convert(Key, options)
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        const json = parser.toJson(buf.toString(), { object: true })
-        if (json.Error) {
-          json.Error.status = status
-          callback(json.Error)
-          return reject(json.Error)
-        }
-        json[Key].status = status
-        callback(null, json[Key])
-        resolve(json[Key])
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      method,
+      headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
+      payload: convert(Key, options)
+    }, (json, res) => {
+      json[Key].status = res.status
+      return json[Key]
+    }, callback)
   }
 
   /*
@@ -84,26 +69,12 @@ module.exports = class {
     let URI = `/queues/${this.queue.name}/messages?waitseconds=${waitseconds}`
     if (numOfMessages) URI += `&numOfMessages=${numOfMessages}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        let json = parser.toJson(buf.toString(), { object: true })
-        if (json.Error) {
-          json.Error.status = status
-          callback(json.Error)
-          return reject(json.Error)
-        }
-        if (numOfMessages) json = json.Messages
-        callback(null, json.Message)
-        resolve(json.Message)
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+    }, (json, res) => {
+      if (numOfMessages) json = json.Messages
+      return json.Message
+    }, callback)
   }
 
   /*
@@ -121,39 +92,17 @@ module.exports = class {
       receiptHandle._attr = { xmlns }
     }
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        method,
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-        payload: convert('ReceiptHandles', receiptHandle)
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        const xml = buf.toString()
-        if (xml) {
-          const json = parser.toJson(xml, { object: true })
-          if (json.Errors) json.Error = json.Errors.Error
-          if (json.Error) {
-            json.Error.status = status
-            callback(json.Error)
-            return reject(json.Error)
-          }
-          return reject(json)
-        }
-        const result = {
-          xmlns,
-          Code: 'No Content',
-          RequestId: res.responseHeaders['x-mns-request-id'],
-          HostId: this.mns.Endpoint,
-          status
-        }
-        callback(null, result)
-        resolve(result)
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      method,
+      headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
+      payload: convert('ReceiptHandles', receiptHandle)
+    }, (json, res) => ({
+      xmlns,
+      Code: 'No Content',
+      RequestId: res.responseHeaders['x-mns-request-id'],
+      HostId: this.mns.Endpoint,
+      status: res.status
+    }), callback)
   }
 
   /*
@@ -170,26 +119,12 @@ module.exports = class {
     let URI = `/queues/${this.queue.name}/messages?peekonly=true`
     if (numOfMessages) URI += `&numOfMessages=${numOfMessages}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        let json = parser.toJson(buf.toString(), { object: true })
-        if (json.Error) {
-          json.Error.status = status
-          callback(json.Error)
-          return reject(json.Error)
-        }
-        if (numOfMessages) json = json.Messages
-        callback(null, json.Message)
-        resolve(json.Message)
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+    }, (json, res) => {
+      if (numOfMessages) json = json.Messages
+      return json.Message
+    }, callback)
   }
 
   /*
@@ -204,26 +139,13 @@ module.exports = class {
     const method = 'PUT'
     const URI = `/queues/${this.queue.name}/messages?receiptHandle=${receiptHandle}&visibilityTimeout=${visibilityTimeout}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
-    return new Promise((resolve, reject) => {
-      fetchUrl(this.mns.Endpoint + URI, {
-        method,
-        headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
-      }, (err, res, buf) => {
-        if (err) {
-          callback(err)
-          return reject(err)
-        }
-        const status = res.status
-        let json = parser.toJson(buf.toString(), { object: true })
-        if (json.Error) {
-          json.Error.status = status
-          callback(json.Error)
-          return reject(json.Error)
-        }
-        callback(null, json.ChangeVisibility)
-        resolve(json.ChangeVisibility)
-      })
-    })
+    return fetchPromise(this.mns.Endpoint + URI, {
+      method,
+      headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
+    }, (json, res) => {
+      json.ChangeVisibility.status = res.status
+      return json.ChangeVisibility
+    }, callback)
   }
 
   subscribe (waitseconds, numOfMessages, delay, callback) {
