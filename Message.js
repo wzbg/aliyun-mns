@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 18:36:46
+* @Last Modified time: 2016-01-22 18:57:13
 */
 'use strict'
 
@@ -10,7 +10,7 @@ const parser = require('xml2json')
 const convert = require('data2xml')()
 const fetchUrl = require('fetch').fetchUrl
 
-const xmlns = 'http://mns.aliyuncs.com/doc/v1/'
+const xmlns = require('./common/constants').xmlns
 
 module.exports = class {
   constructor (queue) {

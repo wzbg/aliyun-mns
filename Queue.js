@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-22 18:41:44
+* @Last Modified time: 2016-01-22 18:57:04
 */
 'use strict'
 
@@ -12,7 +12,7 @@ const fetchUrl = require('fetch').fetchUrl
 
 const Message = require('./Message')
 
-const xmlns = 'http://mns.aliyuncs.com/doc/v1/'
+const xmlns = require('./common/constants').xmlns
 
 /*
 * DelaySeconds
