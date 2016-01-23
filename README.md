@@ -46,6 +46,7 @@ npm install aliyun-mns
  cd samples/topic
  node --harmony_destructuring create
  ```
+
 ## 贡献者
 
 https://github.com/wzbg/aliyun-mns
@@ -58,7 +59,6 @@ https://github.com/wzbg/aliyun-mns
 #### 我们在代码中参考了 ALIYUN SDK，在此声明。
 
 ## License
-
 The MIT License (MIT)
 
-Copyright (c) 2015 - 2016
+Copyright (c) 2016
