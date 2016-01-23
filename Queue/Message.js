@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-23 01:49:00
+* @Last Modified time: 2016-01-24 02:28:09
 */
 'use strict'
 
@@ -31,15 +31,15 @@ module.exports = class {
   *  取值范围1~16（其中1为最高优先级），默认优先级为8
   *  Optional
   */
-  send (options, callback) {
+  send (options, callback) { // SendMessage & BatchSendMessage(options instanceof Array)
     const method = 'POST'
     const URI = `/queues/${this.queue.name}/messages`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     let Key = 'Message'
-    if (typeof options  == 'string') {
+    if (typeof options === 'string') {
       options = { MessageBody: options }
     } else if (options instanceof Array) {
-      options = { Message: options.map(option => typeof option  == 'string' ? { MessageBody: option } : option) }
+      options = { Message: options.map(option => typeof option === 'string' ? { MessageBody: option } : option) }
       Key += 's'
     }
     options._attr = { xmlns }
@@ -55,15 +55,22 @@ module.exports = class {
 
   /*
   * waitseconds
-  *  本次ReceiveMessage请求最长的Polling等待时间①，单位为秒
+  *  本次ReceiveMessage请求最长的Polling等待时间，单位为秒
   *  取值范围0~30
   *  Optional
   * numOfMessages
   *  本次BatchReceiveMessage最多获取的消息条数
   *  取值范围1~16
-  *  Required
+  *  Required(Batch)
   */
-  receive (waitseconds, numOfMessages, callback) {
+  receive (numOfMessages, waitseconds, callback) { // ReceiveMessage & BatchReceiveMessage(numOfMessages>0)
+    if (typeof numOfMessages === 'function') {
+      callback = numOfMessages
+      numOfMessages = undefined
+    } else if (typeof waitseconds === 'function') {
+      callback = waitseconds
+      waitseconds = undefined
+    }
     const method = 'GET'
     waitseconds = waitseconds || 0
     let URI = `/queues/${this.queue.name}/messages?waitseconds=${waitseconds}`
@@ -72,7 +79,12 @@ module.exports = class {
     return fetchPromise(this.mns.Endpoint + URI, {
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
     }, (json, res) => {
-      if (numOfMessages) json = json.Messages
+      if (numOfMessages) {
+        json = json.Messages
+        if (!(json.Message instanceof Array)) {
+          json.Message = [json.Message]
+        }
+      }
       return json.Message
     }, callback)
   }
@@ -82,10 +94,10 @@ module.exports = class {
   *  上次消费后返回的消息ReceiptHandle，详见本文ReceiveMessage接口
   *  Required
   */
-  delete (receiptHandle, callback) {
+  delete (receiptHandle, callback) { // DeleteMessage & BatchDeleteMessage(receiptHandle instanceof Array)
     const method = 'DELETE'
     let URI = `/queues/${this.queue.name}/messages`
-    if (typeof receiptHandle  == 'string') {
+    if (typeof receiptHandle === 'string') {
       URI += `?receiptHandle=${receiptHandle}`
     } else if (receiptHandle instanceof Array) {
       receiptHandle = { receiptHandle }
@@ -112,9 +124,13 @@ module.exports = class {
   * numOfMessages
   *  本次 BatchPeekMessage
   *  最多查看消息条数
-  *  Required
+  *  Required(Batch)
   */
-  peek (numOfMessages, callback) {
+  peek (numOfMessages, callback) { // PeekMessage & BatchPeekMessage(numOfMessages>0)
+    if (typeof numOfMessages === 'function') {
+      callback = numOfMessages
+      numOfMessages = undefined
+    }
     const method = 'GET'
     let URI = `/queues/${this.queue.name}/messages?peekonly=true`
     if (numOfMessages) URI += `&numOfMessages=${numOfMessages}`
@@ -122,7 +138,12 @@ module.exports = class {
     return fetchPromise(this.mns.Endpoint + URI, {
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
     }, (json, res) => {
-      if (numOfMessages) json = json.Messages
+      if (numOfMessages) {
+        json = json.Messages
+        if (!(json.Message instanceof Array)) {
+          json.Message = [json.Message]
+        }
+      }
       return json.Message
     }, callback)
   }
@@ -135,7 +156,7 @@ module.exports = class {
   *  从现在到下次可被用来消费的时间间隔，单位为秒
   *  Required
   */
-  visibility (receiptHandle, visibilityTimeout, callback) {
+  visibility (receiptHandle, visibilityTimeout, callback) { // ChangeMessageVisibility
     const method = 'PUT'
     const URI = `/queues/${this.queue.name}/messages?receiptHandle=${receiptHandle}&visibilityTimeout=${visibilityTimeout}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
@@ -148,11 +169,39 @@ module.exports = class {
     }, callback)
   }
 
-  subscribe (waitseconds, numOfMessages, delay, callback) {
+  /*
+  * waitseconds
+  *  一次ReceiveMessage请求最长的Polling等待时间，单位为秒
+  *  取值范围0~30，默认值为30（秒）
+  *  Optional
+  * numOfMessages
+  *  一次BatchReceiveMessage最多获取的消息条数
+  *  取值范围1~16，默认值为16（条）
+  *  Optional
+  * delay
+  *  一次ReceiveMessage轮询等待时间，单位为秒
+  *  取值范围整数值，默认值为0（秒）
+  *  Optional
+  */
+  subscribe (delay, numOfMessages, waitseconds, callback) {
+    if (typeof delay === 'function') {
+      callback = delay
+      delay = undefined
+    } else if (typeof numOfMessages === 'function') {
+      callback = numOfMessages
+      numOfMessages = undefined
+    } else if (typeof waitseconds === 'function') {
+      callback = waitseconds
+      waitseconds = undefined
+    }
     delay = delay || 0
-    this.receive(waitseconds, numOfMessages, (err, res) => {
-      callback(err, res, () => this.delete(res instanceof Array ? res.map(msg => msg.ReceiptHandle) : res.ReceiptHandle))
-      setTimeout(() => this.subscribe(waitseconds, numOfMessages, delay, callback), delay * 1000)
+    waitseconds = waitseconds || 30
+    numOfMessages = numOfMessages || 16
+    this.receive(numOfMessages, waitseconds, (err, res) => {
+      setTimeout(() => this.subscribe(delay, numOfMessages, waitseconds, callback), delay * 1000)
+      if (err) return callback(err)
+      const receiptHandle = res instanceof Array ? res.map(msg => msg.ReceiptHandle) : res.ReceiptHandle
+      callback(null, res, () => this.delete(receiptHandle))
     })
   }
 }

@@ -2,7 +2,7 @@
 
 > 阿里云 消息服务 非官方 SDK for node.js
 
-**另一个非官方 node.js SDK 请移步 https://www.npmjs.com/package/ali-mqs**
+**另一个非官方 node.js SDK 请移步 https://github.com/InCar/ali-mns**
 
 ## 技术支持
 请发邮件至：yecheng@amandapp.com
