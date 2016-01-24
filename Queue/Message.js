@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-24 02:28:09
+* @Last Modified time: 2016-01-24 17:44:07
 */
 'use strict'
 
@@ -15,6 +15,10 @@ module.exports = class {
   constructor (queue) {
     this.mns = queue.mns
     this.queue = queue
+  }
+
+  get base() {
+    return `/queues/${this.queue.name}/messages`
   }
 
   /*
@@ -33,7 +37,7 @@ module.exports = class {
   */
   send (options, callback) { // SendMessage & BatchSendMessage(options instanceof Array)
     const method = 'POST'
-    const URI = `/queues/${this.queue.name}/messages`
+    const URI = this.base
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     let Key = 'Message'
     if (typeof options === 'string') {
@@ -73,7 +77,7 @@ module.exports = class {
     }
     const method = 'GET'
     waitseconds = waitseconds || 0
-    let URI = `/queues/${this.queue.name}/messages?waitseconds=${waitseconds}`
+    let URI = `${this.base}?waitseconds=${waitseconds}`
     if (numOfMessages) URI += `&numOfMessages=${numOfMessages}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return fetchPromise(this.mns.Endpoint + URI, {
@@ -96,7 +100,7 @@ module.exports = class {
   */
   delete (receiptHandle, callback) { // DeleteMessage & BatchDeleteMessage(receiptHandle instanceof Array)
     const method = 'DELETE'
-    let URI = `/queues/${this.queue.name}/messages`
+    let URI = this.base
     if (typeof receiptHandle === 'string') {
       URI += `?receiptHandle=${receiptHandle}`
     } else if (receiptHandle instanceof Array) {
@@ -132,7 +136,7 @@ module.exports = class {
       numOfMessages = undefined
     }
     const method = 'GET'
-    let URI = `/queues/${this.queue.name}/messages?peekonly=true`
+    let URI = `${this.base}?peekonly=true`
     if (numOfMessages) URI += `&numOfMessages=${numOfMessages}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return fetchPromise(this.mns.Endpoint + URI, {
@@ -158,7 +162,7 @@ module.exports = class {
   */
   visibility (receiptHandle, visibilityTimeout, callback) { // ChangeMessageVisibility
     const method = 'PUT'
-    const URI = `/queues/${this.queue.name}/messages?receiptHandle=${receiptHandle}&visibilityTimeout=${visibilityTimeout}`
+    const URI = `${this.base}?receiptHandle=${receiptHandle}&visibilityTimeout=${visibilityTimeout}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return fetchPromise(this.mns.Endpoint + URI, {
       method,

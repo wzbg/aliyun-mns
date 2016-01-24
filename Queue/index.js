@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-24 02:01:17
+* @Last Modified time: 2016-01-24 17:36:07
 */
 'use strict'
 
@@ -36,6 +36,10 @@ module.exports = class {
     this.options = options || {}
   }
 
+  get base() {
+    return '/queues'
+  }
+
   message () {
     return new Message(this)
   }
@@ -46,7 +50,7 @@ module.exports = class {
       metaoverride = undefined
     }
     const method = 'PUT'
-    let URI = `/queues/${this.name}`
+    let URI = `${this.base}/${this.name}`
     if (metaoverride) URI += `?metaoverride=${metaoverride}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     const options = this.options || {}
@@ -66,7 +70,7 @@ module.exports = class {
 
   delete (callback) { // DeleteQueue
     const method = 'DELETE'
-    const URI = `/queues/${this.name}`
+    const URI = `${this.base}/${this.name}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return fetchPromise(this.mns.Endpoint + URI, {
       method,
@@ -82,7 +86,7 @@ module.exports = class {
 
   get (callback) { // GetQueueAttributes
     const method = 'GET'
-    const URI = `/queues/${this.name}`
+    const URI = `${this.base}/${this.name}`
     const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return fetchPromise(this.mns.Endpoint + URI, {
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
@@ -109,7 +113,7 @@ module.exports = class {
       headers = undefined
     }
     const method = 'GET'
-    const URI = '/queues'
+    const URI = this.base
     headers = headers || {}
     if (!headers['x-mns-version']) {
       headers['x-mns-version'] = this.mns.XMnsVersion
