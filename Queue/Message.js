@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-24 17:44:07
+* @Last Modified time: 2016-01-25 02:29:37
 */
 'use strict'
 
@@ -126,8 +126,7 @@ module.exports = class {
   *  表示这次请求只是去查看队列顶部的消息并不会引起消息的状态改变
   *  Required
   * numOfMessages
-  *  本次 BatchPeekMessage
-  *  最多查看消息条数
+  *  本次 BatchPeekMessage 最多查看消息条数
   *  Required(Batch)
   */
   peek (numOfMessages, callback) { // PeekMessage & BatchPeekMessage(numOfMessages>0)
