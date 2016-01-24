@@ -1,6 +1,6 @@
 {
   "name": "aliyun-mns",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "阿里云 消息服务 非官方 SDK for node.js",
   "main": "index.js",
   "scripts": {

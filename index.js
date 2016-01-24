@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 13:17:37
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-23 02:09:57
+* @Last Modified time: 2016-01-24 18:57:31
 */
 'use strict'
 
@@ -28,7 +28,7 @@ module.exports = class {
     return new Queue(this, queueName, options)
   }
 
-  topic (topicName, maximumMessageSize) {
-    return new Queue(this, topicName, maximumMessageSize)
+  topic (topicName, options) {
+    return new Topic(this, topicName, options)
   }
 }

@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-23 02:03:47
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-24 17:40:37
+* @Last Modified time: 2016-01-24 20:17:38
 */
 'use strict'
 
@@ -23,6 +23,9 @@ module.exports = class {
   constructor (mns, name, options) {
     this.mns = mns
     this.name = name
+    if (typeof options === 'number') {
+      options = { MaximumMessageSize: options }
+    }
     this.options = options
   }
 
@@ -34,8 +37,8 @@ module.exports = class {
     return new Message(this)
   }
 
-  subscription (name) {
-    return new Subscription(this, name)
+  subscription (name, options) {
+    return new Subscription(this, name, options)
   }
 
   create (metaoverride, callback) { // CreateTopic & SetTopicAttributes(metaoverride=true)

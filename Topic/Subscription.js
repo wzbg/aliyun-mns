@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-23 02:04:04
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-24 18:06:24
+* @Last Modified time: 2016-01-24 20:09:51
 */
 'use strict'
 
@@ -30,6 +30,9 @@ module.exports = class {
     this.mns = topic.mns
     this.topic = topic
     this.name = name
+    if (typeof options === 'string') {
+      options = { Endpoint: options }
+    }
     this.options = options
   }
 
@@ -44,10 +47,13 @@ module.exports = class {
     }
     const method = 'PUT'
     let URI = `${this.base}/${this.name}`
-    if (metaoverride) URI += `?metaoverride=${metaoverride}`
-    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     const options = this.options || {}
     options._attr = { xmlns }
+    if (metaoverride) {
+      delete options.Endpoint
+      URI += `?metaoverride=${metaoverride}`
+    }
+    const { DATE, Authorization } = this.mns.authorization({ VERB: method, CanonicalizedResource: URI })
     return fetchPromise(this.mns.Endpoint + URI, {
       method,
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
@@ -131,7 +137,7 @@ module.exports = class {
       let subscriptions = json.Subscriptions.Subscription
       if (!subscriptions) subscriptions = []
       else if (!(subscriptions instanceof Array)) subscriptions = [subscriptions]
-      subscriptions = subscriptions.map(subscription => subscription.TopicURL.substring(subscription.SubscriptionURL.lastIndexOf('/') + 1))
+      subscriptions = subscriptions.map(subscription => subscription.SubscriptionURL.substring(subscription.SubscriptionURL.lastIndexOf('/') + 1))
       return { subscriptions, nextMarker, status: res.status }
     }, callback)
   }
