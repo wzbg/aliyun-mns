@@ -89,7 +89,10 @@ npm install aliyun-mns
   * `visibility (receiptHandle, visibilityTimeout, callback)` - [ChangeMessageVisibility] - 该接口用于修改被消费过并且还处于的 Inactive 的消息到下次可被消费的时间，成功修改消息的 VisibilityTimeout 后，返回新的 ReceiptHandle。
     * `receiptHandle` - [Required] - 上次消费后返回的消息 ReceiptHandle ，详见 ReceiveMessage 接口
     * `visibilityTimeout` - [Required] - 从现在到下次可被用来消费的时间间隔，单位为秒
-  * `subscribe (delay, numOfMessages, waitseconds, callback)` - 
+  * `subscribe (delay, numOfMessages, waitseconds, callback)` - 该接口使用轮询的方式订阅消息队列中的消息。
+    * `delay` - [Optional] - 一次ReceiveMessage轮询等待时间，单位为秒 - 取值范围整数值，默认值为0（秒）
+    * `delay` - [Optional] - 一次BatchReceiveMessage最多获取的消息条数 - 取值范围1~16，默认值为16（条）
+    * `delay` - [Optional] - 一次ReceiveMessage请求最长的Polling等待时间，单位为秒 - 取值范围0~30，默认值为30（秒）
 
 ### [主题接口](https://help.aliyun.com/document_detail/mns/api_reference/topic_api_spec/restful_api_intro.html)
 [`Topic`](https://help.aliyun.com/document_detail/mns/api_reference/topic_api_spec/topic_operation.html)
