@@ -55,7 +55,12 @@ npm install aliyun-mns
   * `constructor (mns, name, options)`
     * `mns` - [REQUIRED] - 使用自己参数初始化的 MNS 对象
     * `name` - [REQUIRED] - 队列名称
-    * `options` - [OPTIONAL] - 构造参数
+    * `options` - [OPTIONAL] - 队列属性
+      * `DelaySeconds` - 发送到该 Queue 的所有消息默认将以DelaySeconds参数指定的秒数延后可被消费，单位为秒。 - 0-604800秒（7天）范围内某个整数值，默认值为0
+      * `MaximumMessageSize` - 发送到该Queue的消息体的最大长度，单位为byte。 - 1024(1KB)-65536（64KB）范围内的某个整数值，默认值为65536（64KB）。
+      * `MessageRetentionPeriod` - 消息在该 Queue 中最长的存活时间，从发送到该队列开始经过此参数指定的时间后，不论消息是否被取出过都将被删除，单位为秒。 - 60 (1分钟)-1296000 (15 天)范围内某个整数值，默认值为345600 (4 天)
+      * `VisibilityTimeout` - 消息从该 Queue 中取出后从Active状态变成Inactive状态后的持续时间，单位为秒。 - 1-43200(12小时)范围内的某个值整数值，默认值为30（秒）
+      * `PollingWaitSeconds` - 当 Queue 中没有消息时，针对该 Queue 的 ReceiveMessage 请求最长的等待时间，单位为秒。 - 0-30秒范围内的某个整数值，默认值为0（秒）
   * `create (metaoverride, callback)` - [CreateQueue] - 该接口用于创建一个新的队列。队列名称是一个不超过256个字符的字符串，必须以字母或数字为首字符，剩余部分可以包含字母、数字和横划线(-)。当metaoverride=true时该接口[SetQueueAttributes]用于修改消息队列的属性。
   * `delete (callback)` - [DeleteQueue] - 该接口用于删除一个已创建的队列。
   * `get (callback)` - [GetQueueAttributes] - 该接口用于获取某个已创建队列的属性，返回属性除了创建队列时设置的可设置属性外，还可以取到队列创建时间、队列属性修改最后时间以及队列中的各类消息统计数（近似值）。
@@ -76,7 +81,8 @@ npm install aliyun-mns
   * `constructor (mns, name, options)`
     * `mns` - [REQUIRED] - 使用自己参数初始化的 MNS 对象
     * `name` - [REQUIRED] - 主题名称
-    * `options` - [OPTIONAL] - 构造参数
+    * `options` - [OPTIONAL] - 主题属性
+      * `MaximumMessageSize` - 发送到该 Topic 的消息体最大长度，单位为Byte - 1024(1KB) - 65536(64KB)范围内的某个整数值，默认值为65536(64KB)
   * `create (metaoverride, callback)` - [CreateTopic] - 该接口用于创建一个新的主题。主题名称是一个不超过256个字符的字符串，必须以字母或数字为首字符，剩余部分可以包含字母、数字和横划线(-)。当metaoverride=true时该接口[SetTopicAttributes]用于修改主题的属性。
   * `delete (callback)` - [DeleteTopic] - 该接口用于删除一个已创建的主题。
   * `get (callback)` - [GetTopicAttributes] - 该接口用于获取某个已创建主题的属性，返回属性除创建主题时的可设置属性外，还可以获取主题的消息最长存活时间、主题创建时间等。
@@ -91,7 +97,10 @@ npm install aliyun-mns
   * `constructor (topic, name, options)`
     * `topic` - [REQUIRED] - 主题
     * `name` - [REQUIRED] - 订阅名称
-    * `options` - [REQUIRED] - 构造参数
+    * `options` - [REQUIRED] - 订阅属性
+      * `Endpoint` - [REQUIRED] - 描述此次订阅中接收消息的终端地址 - 前支持HttpEndpoint，必须以"http://"为前缀
+      * `NotifyStrategy` - [OPTIONAL] - 描述了向 Endpoint 推送消息出现错误时的重试策略 - BACKOFF_RETRY 或者 EXPONENTIAL_DECAY_RETRY，默认为BACKOFF_RETRY，重试策略的具体描述请参考 基本概念/NotifyStrategy
+      * `NotifyContentFormat` - [OPTIONAL] - 描述了向 Endpoint 推送的消息格式 - XML 或者 SIMPLIFIED，默认为 XML，消息格式的具体描述请参考 基本概念/NotifyContentFormat
   * `subscribe (metaoverride, callback)` - [Subscribe] - 该接口用于订阅主题，创建 Subscription。Subscription 名称是一个不超过 256 个字符的字符串，必须以字母或者数字为首字符，剩余部分可以包含字母、数字和横华线(-)。创建Subscription 时，需要指定对应的 Endpoint，否则不合法，目前支持HttpEndpoint。当metaoverride=true时该接口[SetSubscriptionAttributes]用于修改 Subscription 的属性
   * `unsubscribe (callback)` - [Unsubscribe] - 该接口用于取消一个已创建的 Subscription。
   * `get (callback)` - [GetSubscriptionAttributes] - 该接口用于获取 Subscription 的属性。
