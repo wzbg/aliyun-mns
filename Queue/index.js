@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 23:16:03
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-24 17:36:07
+* @Last Modified time: 2016-01-26 23:41:17
 */
 'use strict'
 
@@ -42,6 +42,16 @@ module.exports = class {
 
   message () {
     return new Message(this)
+  }
+
+  connect (callback) {
+    return new Promise((resolve, reject) => {
+      this.create(callback)
+        .then(res => resolve(res))
+        .catch(err => this.create(true, callback)
+          .then(res => resolve(res))
+          .catch(err => reject(err)))
+    })
   }
 
   create (metaoverride, callback) { // CreateQueue & SetQueueAttributes(metaoverride=true)
