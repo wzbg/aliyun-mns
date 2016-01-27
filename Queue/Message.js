@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-28 01:39:15
+* @Last Modified time: 2016-01-28 01:58:51
 */
 'use strict'
 
@@ -201,10 +201,11 @@ module.exports = class {
     waitseconds = waitseconds || 30
     numOfMessages = numOfMessages || 16
     this.receive(numOfMessages, waitseconds, (err, res) => {
-      let receiptHandle
-      if (res instanceof Array) receiptHandle = res.map(msg => msg.ReceiptHandle)
-      else if (res) receiptHandle = res.ReceiptHandle
-      callback(err, res, () => {
+      let receiptHandles
+      if (res instanceof Array) receiptHandles = res.map(msg => msg.ReceiptHandle)
+      else if (res) receiptHandles = res.ReceiptHandle
+      callback(err, res, receiptHandle => {
+        receiptHandle = receiptHandle || receiptHandles
         if (receiptHandle) this.delete(receiptHandle)
         setTimeout(() => this.subscribe(delay, numOfMessages, waitseconds, callback), delay * 1000)
       })
