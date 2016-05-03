@@ -35,7 +35,7 @@ npm install aliyun-mns
 
  ```javascript
  cd samples/queue
- node --harmony_destructuring create
+ node create
  ```
 
 ### 主题接口
@@ -46,7 +46,7 @@ npm install aliyun-mns
 
  ```javascript
  cd samples/topic
- node --harmony_destructuring create
+ node create
  ```
 
 ## API

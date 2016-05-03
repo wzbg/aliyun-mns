@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-22 22:43:34
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-23 01:27:14
+* @Last Modified time: 2016-05-03 12:19:17
 */
 'use strict'
 
@@ -10,7 +10,7 @@ const parser = require('xml2json')
 const fetchUrl = require('fetch').fetchUrl
 
 module.exports = (url, options, handle, callback) => new Promise((resolve, reject) => {
-  callback = callback || () => {}
+  if (!callback) callback = () => {}
   fetchUrl(url, options, (err, res, buf) => {
     if (err) {
       callback(err)

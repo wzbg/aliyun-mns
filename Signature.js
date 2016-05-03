@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-20 11:50:39
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-21 15:32:29
+* @Last Modified time: 2016-01-31 15:40:12
 */
 'use strict'
 
@@ -27,6 +27,6 @@ module.exports = class {
     const signature = `${VERB}\n${CONTENT_MD5}\n${CONTENT_TYPE}\n${DATE}\n${CanonicalizedMNSHeaders}\n${CanonicalizedResource}`
     const hmac = crypto.createHmac('sha1', this.AccessKeySecret)
     hmac.update(signature)
-    return { DATE, Signature: hmac.digest().toString('base64') }
+    return { DATE, Signature: hmac.digest('base64') }
   }
 }

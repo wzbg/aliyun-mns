@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-28 01:39:15
+* @Last Modified time: 2016-01-28 03:09:51
 */
 'use strict'
 
@@ -179,7 +179,7 @@ module.exports = class {
   *  Optional
   * numOfMessages
   *  一次BatchReceiveMessage最多获取的消息条数
-  *  取值范围1~16，默认值为16（条）
+  *  取值范围0~16，默认值为16（条）
   *  Optional
   * delay
   *  一次ReceiveMessage轮询等待时间，单位为秒
