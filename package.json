@@ -1,10 +1,10 @@
 {
   "name": "aliyun-mns",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "阿里云 消息服务 非官方 SDK for node.js",
   "main": "index.js",
   "scripts": {
-    "test": "node --harmony_destructuring test"
+    "test": "node test"
   },
   "author": {
     "name": "wzbg",
