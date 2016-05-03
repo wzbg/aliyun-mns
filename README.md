@@ -141,7 +141,7 @@ npm install aliyun-mns
 https://github.com/wzbg/aliyun-mns
 
 ## 依赖
-- [`fetch`](https://www.npmjs.com/package/fetch) - Fetch url contents. Supports gzipped content for quicker download, redirects (with automatic cookie handling, so no eternal redirect loops), streaming and piping etc.
+- [`request`](https://www.npmjs.com/package/request) - Simplified HTTP request client.
 - [`data2xml`](https://www.npmjs.com/package/data2xml) - A data to XML converter with a nice interface (for NodeJS).
 - [`xml2json`](https://www.npmjs.com/package/xml2json) - Converts xml to json and vice-versa, using node-expat.
 

@@ -2,22 +2,22 @@
 * @Author: zyc
 * @Date:   2016-01-22 22:43:34
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-05-03 12:19:17
+* @Last Modified time: 2016-05-03 17:58:58
 */
 'use strict'
 
 const parser = require('xml2json')
-const fetchUrl = require('fetch').fetchUrl
+const request = require('request')
 
 module.exports = (url, options, handle, callback) => new Promise((resolve, reject) => {
   if (!callback) callback = () => {}
-  fetchUrl(url, options, (err, res, buf) => {
+  request(url, options, (err, res, body) => {
     if (err) {
       callback(err)
       return reject(err)
     }
-    const status = res.status
-    const json = parser.toJson(buf.toString(), { object: true })
+    const status = res.statusCode
+    const json = parser.toJson(body, { object: true })
     if (json.Errors) json.Error = json.Errors.Error
     if (json.Error) {
       json.Error.status = status

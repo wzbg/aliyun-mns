@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-23 02:03:47
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-24 20:17:38
+* @Last Modified time: 2016-05-03 18:03:53
 */
 'use strict'
 
@@ -55,13 +55,13 @@ module.exports = class {
     return fetchPromise(this.mns.Endpoint + URI, {
       method,
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-      payload: convert('Topic', options)
+      body: convert('Topic', options)
     }, (json, res) => ({
       xmlns,
-      Code: res.status === 201 ? 'Created' : 'No Content',
-      RequestId: res.responseHeaders['x-mns-request-id'],
+      Code: res.statusCode === 201 ? 'Created' : 'No Content',
+      RequestId: res.headers['x-mns-request-id'],
       HostId: this.mns.Endpoint,
-      status: res.status
+      status: res.statusCode
     }), callback)
   }
 
@@ -75,9 +75,9 @@ module.exports = class {
     }, (json, res) => ({
       xmlns,
       Code: 'No Content',
-      RequestId: res.responseHeaders['x-mns-request-id'],
+      RequestId: res.headers['x-mns-request-id'],
       HostId: this.mns.Endpoint,
-      status: res.status
+      status: res.statusCode
     }), callback)
   }
 
@@ -88,7 +88,7 @@ module.exports = class {
     return fetchPromise(this.mns.Endpoint + URI, {
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
     }, (json, res) => {
-      json.Topic.status = res.status
+      json.Topic.status = res.statusCode
       return json.Topic
     }, callback)
   }
@@ -136,7 +136,7 @@ module.exports = class {
       if (!topics) topics = []
       else if (!(topics instanceof Array)) topics = [topics]
       topics = topics.map(topic => topic.TopicURL.substring(topic.TopicURL.lastIndexOf('/') + 1))
-      return { topics, nextMarker, status: res.status }
+      return { topics, nextMarker, status: res.statusCode }
     }, callback)
   }
 }

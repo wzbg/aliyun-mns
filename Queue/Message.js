@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-01-21 02:24:41
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-01-28 03:09:51
+* @Last Modified time: 2016-05-03 18:03:48
 */
 'use strict'
 
@@ -50,9 +50,9 @@ module.exports = class {
     return fetchPromise(this.mns.Endpoint + URI, {
       method,
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-      payload: convert(Key, options)
+      body: convert(Key, options)
     }, (json, res) => {
-      json[Key].status = res.status
+      json[Key].status = res.statusCode
       return json[Key]
     }, callback)
   }
@@ -111,13 +111,13 @@ module.exports = class {
     return fetchPromise(this.mns.Endpoint + URI, {
       method,
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion },
-      payload: convert('ReceiptHandles', receiptHandle)
+      body: convert('ReceiptHandles', receiptHandle)
     }, (json, res) => ({
       xmlns,
       Code: 'No Content',
-      RequestId: res.responseHeaders['x-mns-request-id'],
+      RequestId: res.headers['x-mns-request-id'],
       HostId: this.mns.Endpoint,
-      status: res.status
+      status: res.statusCode
     }), callback)
   }
 
@@ -167,7 +167,7 @@ module.exports = class {
       method,
       headers: { Date: DATE, Authorization, 'x-mns-version': this.mns.XMnsVersion }
     }, (json, res) => {
-      json.ChangeVisibility.status = res.status
+      json.ChangeVisibility.status = res.statusCode
       return json.ChangeVisibility
     }, callback)
   }
